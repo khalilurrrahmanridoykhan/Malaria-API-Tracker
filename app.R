@@ -38,8 +38,8 @@ user_base <- tibble::tibble(
 
 
 ui <- dashboardPage(
-  dashboardHeader(
-    # id = "header",
+
+      dashboardHeader(
     titleWidth = "300px",
     title = "Covid Data Analysis, Worldwide",
     tags$li(
@@ -50,6 +50,7 @@ ui <- dashboardPage(
     ),
     tags$li(
       class = "dropdown",
+
       tags$a(
         href = "#", class = "dropdown-toggle", `data-toggle` = "dropdown",
         " Graph And Chart ", tags$b(class = "caret")
@@ -65,7 +66,8 @@ ui <- dashboardPage(
   dashboardBody(
     useShinyjs(),
     tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+      tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+      tags$script(src = "script.js")
     ),
     shinyauthr::loginUI(id = "login"),
     div(
@@ -173,11 +175,15 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
 
 
-    observe({
-      req(credentials()$user_auth)
-      show(id = "show-page-content")
-    })
-
+observe({
+  if (credentials()$user_auth) {
+    shinyjs::show("show-page-content")  # Show the page content
+    session$sendCustomMessage("toggleHeader", TRUE)  # Show the header
+    session$sendCustomMessage("openMapTab", NULL)  # Open the Map tab
+  } else {
+    session$sendCustomMessage("toggleHeader", FALSE)  # Hide the header
+  }
+})
 
   credentials <- shinyauthr::loginServer(
     id = "login",
