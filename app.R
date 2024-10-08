@@ -6,6 +6,7 @@ library(plotly)
 library(purrr)
 library(ggplot2)
 library(dplyr)
+library(shinyjs)
 
 list.files("MaariaApiTracker/R") %>%
   here::here("MaariaApiTracker/R") %>%
@@ -18,7 +19,7 @@ df$date <- as.Date(df$date, format = "%Y-%m-%d")
 
 coords <- read_csv(here::here("./data/world_country_and_usa_states_latitude_and_longitude_values.csv"))
 
-coords_df <- df  %>%
+coords_df <- df %>%
   inner_join(coords, by = c("country" = "country"))
 
 # print(coords_df)
@@ -32,18 +33,8 @@ ui <- dashboardPage(
     tags$li(
       class = "dropdown",
       tags$a(
-        href = "#", class = "dropdown-toggle", `data-toggle` = "dropdown",
-        " Map ", tags$b(class = "caret")
-      ),
-      tags$ul(
-        class = "dropdown-menu",
-        tags$li(tags$a(href = "#shiny-tab-annualy", "Annual Parasite Incidence Map", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-yearly", "Yearly API MAP", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-time", "Time Series API MAP", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-bednet", "Bed Net Coverage Map", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-malariavector", "Malaria Vector Map", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-hfhw", "Hf and HW Distribution Map", `data-toggle` = "tab")), # nolint
-      ),
+        href = "#shiny-tab-time", "Map", `data-toggle` = "tab"
+      )
     ),
     tags$li(
       class = "dropdown",
@@ -53,94 +44,72 @@ ui <- dashboardPage(
       ),
       tags$ul(
         class = "dropdown-menu",
-        tags$li(tags$a(href = "#shiny-tab-yearly1", "Yearly Malaria Cases", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-monthly1", "Manthly Malaria Cases", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-yearlydeaths1", "Yearly Malaria Cases and Deaths", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-ageandgender1", "Age and Gender", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-species1", "Shecies Wish Malaria Cases (Pf/Pv/Mixed/Total)", `data-toggle` = "tab")), # nolint
         tags$li(tags$a(href = "#shiny-tab-casevsservere1", "Countrys Category Plot", `data-toggle` = "tab")), # nolint
         tags$li(tags$a(href = "#shiny-tab-tast1", "Countrys Plot", `data-toggle` = "tab")), # nolint
       ),
-    ),
-    tags$li(
-      class = "dropdown",
-      tags$a(
-        href = "#", class = "dropdown-toggle", `data-toggle` = "dropdown",
-        " Data Analysis Tool ", tags$b(class = "caret")
-      ),
-      tags$ul(
-        class = "dropdown-menu",
-        tags$li(tags$a(href = "#shiny-tab-pivot2", "Pivot Table", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-physical2", "Physical Accessibility Model", `data-toggle` = "tab")), # nolint
-        tags$li(tags$a(href = "#shiny-tab-risk2", "Risk Analysis", `data-toggle` = "tab")), # nolint
-      ),
-    ),
-    tags$li(
-      class = "dropdown",
-      tags$a(
-        href = "#shiny-tab-VillApiViz3", " Vill API", `data-toggle` = "tab"
-      )
     )
   ),
   dashboardSidebar(disable = TRUE),
   dashboardBody(
+    useShinyjs(),
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
     ),
     tabItems(
-      tabItem(
-        tabName = "annualy",
-        leafletOutput("map1Output", height = 500)
-      ),
-      tabItem(
-        tabName = "yearly",
-        leafletOutput("map2Output", height = 500)
-      ),
+      # id = "tabs",
       tabItem(
         tabName = "time",
         div(
           class = "row",
           div(
             class = "col-sm-2 col-md-2 col-lg-2",
-            selectInput("date", "Select Date:", choices = unique(coords_df$date), selected = "2023-02-16")
+            selectInput("date", "Select Date:", choices = unique(coords_df$date), selected = "2023-02-16"),
+            box(
+              title = div(style = "", "Country"),
+              width = 12,
+              status = "primary",
+              solidHeader = TRUE,
+              h3(id = "countryName", style = "text-align: center;", "Bangladesh"),
+              height = "120px"
+            ),
+            box(
+              title = div(style = "text-align: center;", "Cumulative Cases"),
+              width = 12,
+              status = "primary",
+              solidHeader = TRUE,
+              h3(id = "cumulativeCases", style = "text-align: center;", "2037730"),
+              height = "120px"
+            ),
+            box(
+              title = div(style = "text-align: center;", "New Cases Past Week"),
+              width = 12,
+              status = "primary",
+              solidHeader = TRUE,
+              h3(id = "newCasesPastWeek", style = "text-align: center;", "75"),
+              height = "120px"
+            ),
+            box(
+              title = div(style = "text-align: center;", "Cumulative Deaths"),
+              width = 12,
+              status = "primary",
+              solidHeader = TRUE,
+              h3(id = "cumulativeDeaths", style = "text-align: center;", "29445"),
+              height = "120px"
+            ),
+            box(
+              title = div(style = "text-align: center;", "New Deaths Past Week"),
+              width = 12,
+              status = "primary",
+              solidHeader = TRUE,
+              h3(id = "newDeathsPastWeek", style = "text-align: center;", "1"),
+              height = "120px"
+            )
           ),
           div(
             class = "col-sm-10 col-md-10 col-lg-10",
-leafletOutput("covidMap", width = "100%", height = "740px")
+            leafletOutput("covidMap", width = "100%", height = "740px")
           )
         )
-      ),
-      tabItem(
-        tabName = "bednet",
-        h1("Time Series API MAP")
-      ),
-      tabItem(
-        tabName = "malariavector",
-        h1("Time Series API MAP")
-      ),
-      tabItem(
-        tabName = "hfhw",
-        h1("Time Series API MAP")
-      ),
-      tabItem(
-        tabName = "yearly1",
-        h1("Time Series API MAP")
-      ),
-      tabItem(
-        tabName = "monthly1",
-        h1("Time Series API MAP")
-      ),
-      tabItem(
-        tabName = "yearlydeaths1",
-        h1("Time Series API MAP")
-      ),
-      tabItem(
-        tabName = "ageandgender1",
-        h1("Time Series API MAP")
-      ),
-      tabItem(
-        tabName = "species1",
-        h1("Time Series API MAP")
       ),
       tabItem(
         tabName = "casevsservere1",
@@ -180,22 +149,6 @@ leafletOutput("covidMap", width = "100%", height = "740px")
             plotOutput("cumulativeCasesPlot")
           )
         )
-      ),
-      tabItem(
-        tabName = "pivot2",
-        h1("Time Series API MAP Last test")
-      ),
-      tabItem(
-        tabName = "physical2",
-        h1("Time Series API MAP Last test")
-      ),
-      tabItem(
-        tabName = "risk2",
-        h1("Time Series API MAP Last test")
-      ),
-      tabItem(
-        tabName = "VillApiViz3",
-        h1("Vill API")
       )
     )
   ),
@@ -203,7 +156,7 @@ leafletOutput("covidMap", width = "100%", height = "740px")
 )
 
 server <- function(input, output, session) {
-  updateTabItems(session, "tabs", "annualy")
+  # updateTabItems(session, "tabs", "time")
 
   output$map1Output <- renderLeaflet({
     leaflet() %>%
@@ -216,7 +169,6 @@ server <- function(input, output, session) {
       addTiles() %>%
       addMarkers(lng = -74.0060, lat = 40.7128, popup = "Map 2 - New York")
   })
-
   observe({
     updateSelectInput(session, "country", choices = unique(df$country))
   })
@@ -244,15 +196,15 @@ server <- function(input, output, session) {
     width = 1000
   )
 
-  # Pai Chart
-
   observe({
     updateSelectInput(session, "country1", choices = unique(df$country))
   })
+
   filtered_data1 <- reactive({
     req(input$country1)
     df %>% filter(country == input$country1)
   })
+
   output$pieChart <- renderPlot(
     {
       req(filtered_data1())
@@ -260,7 +212,6 @@ server <- function(input, output, session) {
       data <- filtered_data1()
       metric <- input$metric
 
-      # Create a summary for the pie chart
       summary_data <- data %>%
         summarise(
           Value = sum(!!sym(metric), na.rm = TRUE)
@@ -269,7 +220,6 @@ server <- function(input, output, session) {
         pivot_longer(cols = c(Value, Remaining), names_to = "Category", values_to = "Count") %>%
         mutate(Percentage = Count / sum(Count) * 100)
 
-      # Create the pie chart
       ggplot(summary_data, aes(x = "", y = Count, fill = Category)) +
         geom_bar(stat = "identity", width = 1) +
         coord_polar(theta = "y") +
@@ -284,37 +234,58 @@ server <- function(input, output, session) {
     height = 700,
     width = 1000
   )
+
   globalVariables(c("country", "Value", "Count", "Category"))
 
-  #Covid Map
-
-    filtered_data2 <- reactive({
+  filtered_data2 <- reactive({
     req(input$date)
     coords_df %>% filter(date == input$date)
   })
 
-    output$covidMap <- renderLeaflet({
+  output$covidMap <- renderLeaflet({
     leaflet(filtered_data2()) %>%
       addTiles() %>%
       addCircleMarkers(
-      ~longitude, ~latitude,
-      radius = ~sqrt(cumulative_cases) / 500, # Adjust the size for better visibility
-      color = "red",
-      stroke = FALSE, fillOpacity = 0.7,
-      popup = ~paste0(
-      "<strong>Country: </strong>", country, "<br>",
-      "<strong>Date: </strong>", date, "<br>",
-      "<strong>Cumulative Cases: </strong>", cumulative_cases, "<br>",
-      "<strong>New Cases Past Week: </strong>", new_cases_past_week, "<br>",
-      "<strong>Cumulative Deaths: </strong>", cumulative_deaths, "<br>",
-      "<strong>New Deaths Past Week: </strong>", new_deaths_past_week
-      )
+        ~longitude, ~latitude,
+        radius = ~ sqrt(cumulative_cases) / 500,
+        color = "red",
+        stroke = FALSE, fillOpacity = 0.7,
+        popup = ~ paste0(
+          "<strong>Country: </strong>", country, "<br>",
+          "<strong>Date: </strong>", date, "<br>",
+          "<strong>Cumulative Cases: </strong>", cumulative_cases, "<br>",
+          "<strong>New Cases Past Week: </strong>", new_cases_past_week, "<br>",
+          "<strong>Cumulative Deaths: </strong>", cumulative_deaths, "<br>",
+          "<strong>New Deaths Past Week: </strong>", new_deaths_past_week
+        ),
+        layerId = ~country
       ) %>%
-      setView(lng = mean(filtered_data2()$longitude), lat = mean(filtered_data2()$latitude), zoom = 2) # Adjust the zoom level for better visibility
-    })
+      setView(lng = mean(filtered_data2()$longitude), lat = mean(filtered_data2()$latitude), zoom = 2)
+  })
 
+  observeEvent(input$covidMap_marker_click, {
+    click <- input$covidMap_marker_click
+    selected_country <- click$id
+    selected_data <- filtered_data2() %>% filter(country == selected_country)
 
+    updateCountryDetails(selected_data)
+  })
 
+  updateCountryDetails <- function(selected_data) {
+    selected_data <- selected_data[1, ]
+
+    country <- selected_data$country
+    cumulative_cases <- selected_data$cumulative_cases
+    new_cases_past_week <- selected_data$new_cases_past_week
+    cumulative_deaths <- selected_data$cumulative_deaths
+    new_deaths_past_week <- selected_data$new_deaths_past_week
+
+    runjs(paste0("$('#countryName').text('", country, "');"))
+    runjs(paste0("$('#cumulativeCases').text('", cumulative_cases, "');"))
+    runjs(paste0("$('#newCasesPastWeek').text('", new_cases_past_week, "');"))
+    runjs(paste0("$('#cumulativeDeaths').text('", cumulative_deaths, "');"))
+    runjs(paste0("$('#newDeathsPastWeek').text('", new_deaths_past_week, "');"))
+  }
 }
 
 shinyApp(ui = ui, server = server)
