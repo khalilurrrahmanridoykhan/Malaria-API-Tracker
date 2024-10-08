@@ -7,7 +7,7 @@ library(purrr)
 library(ggplot2)
 library(dplyr)
 library(shinyjs)
-
+library(shinyauthr)
 list.files("MaariaApiTracker/R") %>%
   here::here("MaariaApiTracker/R") %>%
   purrr::walk(
@@ -22,12 +22,24 @@ coords <- read_csv(here::here("./data/world_country_and_usa_states_latitude_and_
 coords_df <- df %>%
   inner_join(coords, by = c("country" = "country"))
 
+df_quarantine_bangladesh_24_03_2020 <- read_csv("./data/covid-19_district-wise-quarantine_bangladesh_24.03.2020.csv")
+
+
 # print(coords_df)
 countrys_groupings(df)
+
+user_base <- tibble::tibble(
+  user = c("admin", "user2"),
+  password = c("123456", "pass2"),
+  permissions = c("admin", "standard"),
+  name = c("User One", "User Two")
+)
+
 
 
 ui <- dashboardPage(
   dashboardHeader(
+    # id = "header",
     titleWidth = "300px",
     title = "Covid Data Analysis, Worldwide",
     tags$li(
@@ -55,108 +67,138 @@ ui <- dashboardPage(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
     ),
-    tabItems(
-      # id = "tabs",
-      tabItem(
-        tabName = "time",
-        div(
-          class = "row",
+    shinyauthr::loginUI(id = "login"),
+    div(
+      id = "show-page-content",
+      tabItems(
+        tabItem(
+          tabName = "time",
           div(
-            class = "col-sm-2 col-md-2 col-lg-2",
-            selectInput("date", "Select Date:", choices = unique(coords_df$date), selected = "2023-02-16"),
-            box(
-              title = div(style = "", "Country"),
-              width = 12,
-              status = "primary",
-              solidHeader = TRUE,
-              h3(id = "countryName", style = "text-align: center;", "Bangladesh"),
-              height = "120px"
-            ),
-            box(
-              title = div(style = "text-align: center;", "Cumulative Cases"),
-              width = 12,
-              status = "primary",
-              solidHeader = TRUE,
-              h3(id = "cumulativeCases", style = "text-align: center;", "2037730"),
-              height = "120px"
-            ),
-            box(
-              title = div(style = "text-align: center;", "New Cases Past Week"),
-              width = 12,
-              status = "primary",
-              solidHeader = TRUE,
-              h3(id = "newCasesPastWeek", style = "text-align: center;", "75"),
-              height = "120px"
-            ),
-            box(
-              title = div(style = "text-align: center;", "Cumulative Deaths"),
-              width = 12,
-              status = "primary",
-              solidHeader = TRUE,
-              h3(id = "cumulativeDeaths", style = "text-align: center;", "29445"),
-              height = "120px"
-            ),
-            box(
-              title = div(style = "text-align: center;", "New Deaths Past Week"),
-              width = 12,
-              status = "primary",
-              solidHeader = TRUE,
-              h3(id = "newDeathsPastWeek", style = "text-align: center;", "1"),
-              height = "120px"
-            )
-          ),
-          div(
-            class = "col-sm-10 col-md-10 col-lg-10",
-            leafletOutput("covidMap", width = "100%", height = "740px")
-          )
-        )
-      ),
-      tabItem(
-        tabName = "casevsservere1",
-        div(
-          class = "row",
-          div(
-            class = "col-sm-3 col-md-3 col-lg-3",
-            selectInput("country1", "Select Country:", choices = NULL, selected = NULL),
-            selectInput("metric", "Select Metric:",
-              choices = c(
-                "Cumulative Cases" = "cumulative_cases",
-                "New Cases Past Week" = "new_cases_past_week",
-                "Cumulative Deaths" = "cumulative_deaths",
-                "New Deaths Past Week" = "new_deaths_past_week"
+            class = "row",
+            div(
+              class = "col-sm-2 col-md-2 col-lg-2",
+              selectInput("date", "Select Date:", choices = unique(coords_df$date), selected = "2023-02-16"),
+              box(
+                title = div(style = "", "Country"),
+                width = 12,
+                status = "primary",
+                solidHeader = TRUE,
+                h3(id = "countryName", style = "text-align: center;", "Bangladesh"),
+                height = "120px"
+              ),
+              box(
+                title = div(style = "text-align: center;", "Cumulative Cases"),
+                width = 12,
+                status = "primary",
+                solidHeader = TRUE,
+                h3(id = "cumulativeCases", style = "text-align: center;", "2037730"),
+                height = "120px"
+              ),
+              box(
+                title = div(style = "text-align: center;", "New Cases Past Week"),
+                width = 12,
+                status = "primary",
+                solidHeader = TRUE,
+                h3(id = "newCasesPastWeek", style = "text-align: center;", "75"),
+                height = "120px"
+              ),
+              box(
+                title = div(style = "text-align: center;", "Cumulative Deaths"),
+                width = 12,
+                status = "primary",
+                solidHeader = TRUE,
+                h3(id = "cumulativeDeaths", style = "text-align: center;", "29445"),
+                height = "120px"
+              ),
+              box(
+                title = div(style = "text-align: center;", "New Deaths Past Week"),
+                width = 12,
+                status = "primary",
+                solidHeader = TRUE,
+                h3(id = "newDeathsPastWeek", style = "text-align: center;", "1"),
+                height = "120px"
               )
+            ),
+            div(
+              class = "col-sm-10 col-md-10 col-lg-10",
+              leafletOutput("covidMap", width = "100%", height = "740px")
             )
-          ),
-          div(
-            class = "col-sm-9 col-md-9 col-lg-9",
-            plotOutput("pieChart")
           )
-        )
-      ),
-      tabItem(
-        tabName = "tast1",
-        div(
-          class = "row",
+        ),
+        tabItem(
+          tabName = "casevsservere1",
           div(
-            class = "col-sm-3 col-md-3 col-lg-3",
-            selectInput("country", "Select Country:", choices = NULL, selected = NULL),
-            dateRangeInput("dateRange", "Select Date Range:",
-              start = "2020-01-22", end = Sys.Date()
+            class = "row",
+            div(
+              class = "col-sm-3 col-md-3 col-lg-3",
+              selectInput("country1", "Select Country:", choices = NULL, selected = NULL),
+              selectInput("metric", "Select Metric:",
+                choices = c(
+                  "Cumulative Cases" = "cumulative_cases",
+                  "New Cases Past Week" = "new_cases_past_week",
+                  "Cumulative Deaths" = "cumulative_deaths",
+                  "New Deaths Past Week" = "new_deaths_past_week"
+                )
+              )
+            ),
+            div(
+              class = "col-sm-9 col-md-9 col-lg-9",
+              plotOutput("pieChart")
             )
-          ),
+          )
+        ),
+        tabItem(
+          tabName = "tast1",
           div(
-            class = "col-sm-9 col-md-9 col-lg-9",
-            plotOutput("cumulativeCasesPlot")
+            class = "row",
+            div(
+              class = "col-sm-3 col-md-3 col-lg-3",
+              selectInput("country", "Select Country:", choices = NULL, selected = NULL),
+              dateRangeInput("dateRange", "Select Date Range:",
+                start = "2020-01-22", end = Sys.Date()
+              )
+            ),
+            div(
+              class = "col-sm-9 col-md-9 col-lg-9",
+              plotOutput("cumulativeCasesPlot")
+            )
           )
         )
       )
-    )
+    )  %>% hidden(),
   ),
   skin = "blue"
 )
 
 server <- function(input, output, session) {
-  # updateTabItems(session, "tabs", "time")
+
+
+    observe({
+      req(credentials()$user_auth)
+      show(id = "show-page-content")
+    })
+
+
+  credentials <- shinyauthr::loginServer(
+    id = "login",
+    data = user_base,
+    user_col = user,
+    pwd_col = password,
+    log_out = reactive(logout_init())
+  )
+  logout_init <- shinyauthr::logoutServer(
+    id = "logout",
+    active = reactive(credentials()$user_auth)
+  )
+
+  # observe({
+  #   if (credentials()$user_auth) {
+  #     shinyjs::show("tabs") # Show tabs after authentication
+  #     updateTabItems(session, "tabs", "time") # Redirect to the "time" tab
+  #   } else {
+  #     shinyjs::hide("tabs") # Hide tabs if not authenticated
+  #   }
+  # })
 
   output$map1Output <- renderLeaflet({
     leaflet() %>%
