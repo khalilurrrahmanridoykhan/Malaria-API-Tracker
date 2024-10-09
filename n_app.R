@@ -1,4 +1,3 @@
-# app.R
 library(shiny)
 library(shinydashboard)
 library(leaflet)
@@ -9,6 +8,7 @@ library(ggplot2)
 library(dplyr)
 library(shinyjs)
 library(shinyauthr)
+
 
 list.files("MaariaApiTracker/R") %>%
   here::here("MaariaApiTracker/R") %>%
@@ -33,142 +33,124 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two")
 )
 
-ui <- dashboardPage(
-  dashboardHeader(
-    titleWidth = "300px",
-    title = "Covid Data Analysis, Worldwide",
-    tags$li(
-      class = "dropdown",
-      tags$a(
-        href = "#shiny-tab-time", "Map", `data-toggle` = "tab"
-      )
-    ),
-    tags$li(
-      class = "dropdown",
-      tags$a(
-        href = "#", class = "dropdown-toggle", `data-toggle` = "dropdown",
-        " Graph And Chart ", tags$b(class = "caret")
+mapTab <- function() {
+  tabPanel(
+    "Map",
+    div(
+      class = "row",
+      div(
+        class = "col-sm-2 col-md-2 col-lg-2",
+        selectInput("date", "Select Date:", choices = unique(coords_df$date), selected = "2023-02-16"),
+        box(
+          title = div(style = "", "Country"),
+          width = 12,
+          status = "primary",
+          solidHeader = TRUE,
+          h3(id = "countryName", style = "text-align: center;", "Bangladesh"),
+          height = "120px"
+        ),
+        box(
+          title = div(style = "text-align: center;", "Cumulative Cases"),
+          width = 12,
+          status = "primary",
+          solidHeader = TRUE,
+          h3(id = "cumulativeCases", style = "text-align: center;", "2037730"),
+          height = "120px"
+        ),
+        box(
+          title = div(style = "text-align: center;", "New Cases Past Week"),
+          width = 12,
+          status = "primary",
+          solidHeader = TRUE,
+          h3(id = "newCasesPastWeek", style = "text-align: center;", "75"),
+          height = "120px"
+        ),
+        box(
+          title = div(style = "text-align: center;", "Cumulative Deaths"),
+          width = 12,
+          status = "primary",
+          solidHeader = TRUE,
+          h3(id = "cumulativeDeaths", style = "text-align: center;", "29445"),
+          height = "120px"
+        ),
+        box(
+          title = div(style = "text-align: center;", "New Deaths Past Week"),
+          width = 12,
+          status = "primary",
+          solidHeader = TRUE,
+          h3(id = "newDeathsPastWeek", style = "text-align: center;", "1")
+        )
       ),
-      tags$ul(
-        class = "dropdown-menu",
-        tags$li(tags$a(href = "#shiny-tab-casevsservere1", "Countrys Category Plot", `data-toggle` = "tab")),
-        tags$li(tags$a(href = "#shiny-tab-tast1", "Countrys Plot", `data-toggle` = "tab"))
+      div(
+        class = "col-sm-10 col-md-10 col-lg-10",
+        leafletOutput("covidMap", width = "100%", height = "740px")
       )
     )
-  ),
-  dashboardSidebar(disable = TRUE),
-  dashboardBody(
-    useShinyjs(),
-    tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
-      tags$script(src = "script.js")
-    ),
-    shinyauthr::loginUI(id = "login"),
+  )
+}
+
+plotTab <- function() {
+  tabPanel(
+    "pieChart",
     div(
-      id = "show-page-content",
-      fluidPage(
-        div(
-          id = "home-page",
-        ),
-        tabItems(
-          tabItem(
-            tabName = "time",
-            div(
-              class = "row",
-              div(
-                class = "col-sm-2 col-md-2 col-lg-2",
-                selectInput("date", "Select Date:", choices = unique(coords_df$date), selected = "2023-02-16"),
-                box(
-                  title = div(style = "", "Country"),
-                  width = 12,
-                  status = "primary",
-                  solidHeader = TRUE,
-                  h3(id = "countryName", style = "text-align: center;", "Bangladesh"),
-                  height = "120px"
-                ),
-                box(
-                  title = div(style = "text-align: center;", "Cumulative Cases"),
-                  width = 12,
-                  status = "primary",
-                  solidHeader = TRUE,
-                  h3(id = "cumulativeCases", style = "text-align: center;", "2037730"),
-                  height = "120px"
-                ),
-                box(
-                  title = div(style = "text-align: center;", "New Cases Past Week"),
-                  width = 12,
-                  status = "primary",
-                  solidHeader = TRUE,
-                  h3(id = "newCasesPastWeek", style = "text-align: center;", "75"),
-                  height = "120px"
-                ),
-                box(
-                  title = div(style = "text-align: center;", "Cumulative Deaths"),
-                  width = 12,
-                  status = "primary",
-                  solidHeader = TRUE,
-                  h3(id = "cumulativeDeaths", style = "text-align: center;", "29445"),
-                  height = "120px"
-                ),
-                box(
-                  title = div(style = "text-align: center;", "New Deaths Past Week"),
-                  width = 12,
-                  status = "primary",
-                  solidHeader = TRUE,
-                  h3(id = "newDeathsPastWeek", style = "text-align: center;", "1"),
-                  height = "120px"
-                )
-              ),
-              div(
-                class = "col-sm-10 col-md-10 col-lg-10",
-                leafletOutput("covidMap", width = "100%", height = "740px")
-              )
-            )
-          ),
-          tabItem(
-            tabName = "casevsservere1",
-            div(
-              class = "row",
-              div(
-                class = "col-sm-3 col-md-3 col-lg-3",
-                selectInput("country1", "Select Country:", choices = NULL, selected = NULL),
-                selectInput("metric", "Select Metric:",
-                  choices = c(
-                    "Cumulative Cases" = "cumulative_cases",
-                    "New Cases Past Week" = "new_cases_past_week",
-                    "Cumulative Deaths" = "cumulative_deaths",
-                    "New Deaths Past Week" = "new_deaths_past_week"
-                  )
-                )
-              ),
-              div(
-                class = "col-sm-9 col-md-9 col-lg-9",
-                plotOutput("pieChart")
-              )
-            )
-          ),
-          tabItem(
-            tabName = "tast1",
-            div(
-              class = "row",
-              div(
-                class = "col-sm-3 col-md-3 col-lg-3",
-                selectInput("country", "Select Country:", choices = NULL, selected = NULL),
-                dateRangeInput("dateRange", "Select Date Range:",
-                  start = "2020-01-22", end = Sys.Date()
-                )
-              ),
-              div(
-                class = "col-sm-9 col-md-9 col-lg-9",
-                plotOutput("cumulativeCasesPlot")
-              )
-            )
+      class = "row",
+      div(
+        class = "col-sm-3 col-md-3 col-lg-3",
+        selectInput("country1", "Select Country:", choices = NULL, selected = NULL),
+        selectInput("metric", "Select Metric:",
+          choices = c(
+            "Cumulative Cases" = "cumulative_cases",
+            "New Cases Past Week" = "new_cases_past_week",
+            "Cumulative Deaths" = "cumulative_deaths",
+            "New Deaths Past Week" = "new_deaths_past_week"
           )
         )
+      ),
+      div(
+        class = "col-sm-9 col-md-9 col-lg-9",
+        plotOutput("pieChart")
       )
-    ) %>% hidden()
-  ),
-  skin = "blue"
+    )
+  )
+}
+
+paiTab <- function() {
+  tabPanel(
+    "cumulativeCasesPlot",
+    div(
+      class = "row",
+      div(
+        class = "col-sm-3 col-md-3 col-lg-3",
+        selectInput("country", "Select Country:", choices = NULL, selected = NULL),
+        dateRangeInput("dateRange", "Select Date Range:",
+          start = "2020-01-22", end = Sys.Date()
+        )
+      ),
+      div(
+        class = "col-sm-9 col-md-9 col-lg-9",
+        plotOutput("cumulativeCasesPlot")
+      )
+    )
+  )
+}
+
+
+GraphAndPlots <- function() {
+  navbarMenu(
+    "Graphs and Plots",
+    paiTab(),
+    plotTab()
+  )
+}
+
+ui <- navbarPage("Navbar!",
+  mapTab(),
+  GraphAndPlots(),
+  theme = shinythemes::shinytheme("cerulean"),
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+    tags$script(src = "script.js")
+  )
 )
 
 server <- function(input, output, session) {
